@@ -66,7 +66,10 @@ fun TrabajoScreen(
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { onProgramar(retardo) }) { Text("Programar") }
-                    OutlinedButton(onClick = onCancelar) { Text("Cancelar") }
+                    OutlinedButton(
+                        onClick = onCancelar,
+                        enabled = info != null && !info.state.isFinished
+                    ) { Text("Cancelar") }
                 }
             }
         }
