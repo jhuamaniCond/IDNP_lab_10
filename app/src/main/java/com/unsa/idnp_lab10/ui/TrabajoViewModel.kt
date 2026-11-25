@@ -52,7 +52,14 @@ class TrabajoViewModel(app: Application) : AndroidViewModel(app) {
         idActual.value = programador.programarSincronizacion(retardoSegundos, origen = "boton_ui")
     }
 
+    fun programarPeriodico() {
+        _historial.value = emptyList()
+        idActual.value = programador.programarSincronizacionPeriodica(origen = "boton_ui_periodico")
+    }
+
     fun cancelar() = programador.cancelar()
+
+    fun cancelarPeriodico() = programador.cancelarPeriodico()
 
     private fun registrarCambio(info: WorkInfo) {
         // getWorkInfoByIdFlow puede reemitir el mismo estado (p. ej. al

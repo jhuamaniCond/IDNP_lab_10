@@ -2,8 +2,12 @@ package com.unsa.idnp_lab10.worker
 
 import android.content.Context
 import android.util.Log
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -12,30 +16,58 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 /**
- * Punto 3: centraliza cómo se programa el trabajo.
- *
- * El Worker solo sabe QUÉ hacer; aquí se decide CÓMO y CUÁNDO se ejecuta
- * (WorkRequest). Para comprobar el funcionamiento se usa un
- * OneTimeWorkRequest con un retardo inicial corto.
+ * Punto 3, 5 y 6: Centraliza cómo se programa el trabajo (OneTime y Periodic),
+ * añadiendo restricciones pertinentes (Punto 5) y soporte periódico (Punto 6).
  */
 class ProgramadorTrabajo(context: Context) {
 
     private val workManager = WorkManager.getInstance(context.applicationContext)
 
-    /** Encola una sincronización única y devuelve el id de la solicitud. */
+    /**
+     * Punto 5: Restricciones pertinentes.
+     * Como la sincronización de apuntes requiere acceso a internet (CampusDocs),
+     * exigimos que haya red conectada.
+     */
+    private val restriccionesSincronizacion = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    /** Encola una sincronización única con restricciones y retardo opcional. */
     fun programarSincronizacion(retardoSegundos: Long, origen: String): UUID {
         val solicitud = OneTimeWorkRequestBuilder<SincronizacionWorker>()
             .setInitialDelay(retardoSegundos, TimeUnit.SECONDS)
+            .setConstraints(restriccionesSincronizacion)
             .setInputData(workDataOf(SincronizacionWorker.CLAVE_ORIGEN to origen))
             .addTag(ETIQUETA)
             .build()
 
-        // Trabajo único por nombre: si se pulsa otra vez, reemplaza al anterior
-        // en lugar de acumular sincronizaciones duplicadas.
         workManager.enqueueUniqueWork(NOMBRE_UNICO, ExistingWorkPolicy.REPLACE, solicitud)
         Log.i(SincronizacionWorker.TAG, "OneTimeWorkRequest encolado | id=${solicitud.id} | " +
-                "retardo=${retardoSegundos}s | origen=$origen")
+                "retardo=${retardoSegundos}s | origen=$origen | restricción=NETWORK_CONNECTED")
         return solicitud.id
+    }
+
+    /**
+     * Punto 6: Configurar trabajo periódico respetando las restricciones de intervalo de Android.
+     * Android / WorkManager exige un intervalo mínimo de 15 minutos para PeriodicWorkRequest.
+     */
+    fun programarSincronizacionPeriodica(origen: String): UUID {
+        val solicitudPeriodica = PeriodicWorkRequestBuilder<SincronizacionWorker>(
+            15, TimeUnit.MINUTES // Intervalo mínimo exigido por el sistema
+        )
+            .setConstraints(restriccionesSincronizacion)
+            .setInputData(workDataOf(SincronizacionWorker.CLAVE_ORIGEN to "$origen (periódico)"))
+            .addTag(ETIQUETA_PERIODICA)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            NOMBRE_PERIODICO,
+            ExistingPeriodicWorkPolicy.KEEP,
+            solicitudPeriodica
+        )
+        Log.i(SincronizacionWorker.TAG, "PeriodicWorkRequest encolado | id=${solicitudPeriodica.id} | " +
+                "intervalo=15 min | origen=$origen")
+        return solicitudPeriodica.id
     }
 
     /** Punto 4: flujo con cada cambio de estado de la solicitud. */
@@ -46,8 +78,15 @@ class ProgramadorTrabajo(context: Context) {
         Log.i(SincronizacionWorker.TAG, "Cancelación solicitada para '$NOMBRE_UNICO'")
     }
 
+    fun cancelarPeriodico() {
+        workManager.cancelUniqueWork(NOMBRE_PERIODICO)
+        Log.i(SincronizacionWorker.TAG, "Cancelación solicitada para periódico '$NOMBRE_PERIODICO'")
+    }
+
     companion object {
         const val NOMBRE_UNICO = "sincronizacion_apuntes_unica"
+        const val NOMBRE_PERIODICO = "sincronizacion_apuntes_periodica"
         const val ETIQUETA = "sincronizacion"
+        const val ETIQUETA_PERIODICA = "sincronizacion_periodica"
     }
 }

@@ -36,6 +36,8 @@ fun TrabajoScreen(
     historial: List<CambioEstado>,
     onProgramar: (Long) -> Unit,
     onCancelar: () -> Unit,
+    onProgramarPeriodico: () -> Unit,
+    onCancelarPeriodico: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var retardo by rememberSaveable { mutableLongStateOf(10L) }
@@ -47,13 +49,13 @@ fun TrabajoScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Sincronización diferida", style = MaterialTheme.typography.headlineSmall,
+        Text("Sincronización diferida y periódica", style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold)
         Text("CampusDocs · Lab 10 WorkManager", style = MaterialTheme.typography.bodyMedium)
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Programar OneTimeWorkRequest", fontWeight = FontWeight.SemiBold)
+                Text("1. OneTimeWorkRequest (Única)", fontWeight = FontWeight.SemiBold)
                 Text("Retardo inicial:", style = MaterialTheme.typography.bodyMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(0L, 10L, 30L).forEach { segundos ->
@@ -65,11 +67,22 @@ fun TrabajoScreen(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { onProgramar(retardo) }) { Text("Programar") }
+                    Button(onClick = { onProgramar(retardo) }) { Text("Programar Única") }
                     OutlinedButton(
                         onClick = onCancelar,
                         enabled = info != null && !info.state.isFinished
                     ) { Text("Cancelar") }
+                }
+            }
+        }
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("2. PeriodicWorkRequest (Periódica)", fontWeight = FontWeight.SemiBold)
+                Text("Intervalo: 15 minutos (mínimo exigido por Android)", style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onProgramarPeriodico) { Text("Programar Periódica") }
+                    OutlinedButton(onClick = onCancelarPeriodico) { Text("Cancelar Periódica") }
                 }
             }
         }

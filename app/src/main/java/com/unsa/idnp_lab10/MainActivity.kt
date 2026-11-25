@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
                         historial = historial,
                         onProgramar = vm::programar,
                         onCancelar = vm::cancelar,
+                        onProgramarPeriodico = vm::programarPeriodico,
+                        onCancelarPeriodico = vm::cancelarPeriodico,
                         modifier = Modifier.padding(relleno)
                     )
                 }
