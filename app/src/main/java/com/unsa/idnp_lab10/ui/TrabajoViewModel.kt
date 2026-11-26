@@ -26,9 +26,15 @@ import java.util.UUID
 data class CambioEstado(val hora: String, val estado: WorkInfo.State)
 
 /**
- * Punto 4: observa el estado del trabajo y lo registra en Logcat.
+ * Punto 4 y 7: Observa el estado del trabajo y lo registra en Logcat.
  * Mantiene el id de la última solicitud y el historial de estados para
  * que la pantalla los muestre y sobrevivan a una rotación.
+ *
+ * Cumplimiento del Punto 7 en la capa UI/ViewModel:
+ * 1. La programación y cancelación a través de WorkManager delegan internamente
+ *    a un ejecutor en segundo plano (Room DB), evitando bloqueo del hilo principal.
+ * 2. La observación reactiva utiliza [StateFlow] y [viewModelScope], de modo que
+ *    el hilo principal únicamente recibe eventos de estado ya calculados.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TrabajoViewModel(app: Application) : AndroidViewModel(app) {

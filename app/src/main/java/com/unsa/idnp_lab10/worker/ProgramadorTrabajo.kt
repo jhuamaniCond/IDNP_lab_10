@@ -16,8 +16,14 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 /**
- * Punto 3, 5 y 6: Centraliza cómo se programa el trabajo (OneTime y Periodic),
- * añadiendo restricciones pertinentes (Punto 5) y soporte periódico (Punto 6).
+ * Punto 3, 5, 6, 7 y 8: Centraliza cómo se programa el trabajo (OneTime y Periodic),
+ * añadiendo restricciones pertinentes (Punto 5), soporte periódico (Punto 6)
+ * y garantizando la desvinculación total del hilo principal (Punto 7).
+ *
+ * Criterio de arquitectura (Punto 8):
+ * Se delega en WorkManager porque la sincronización de apuntes de CampusDocs es un
+ * trabajo diferible pero garantizado (debe completarse incluso si el usuario sale
+ * de la app, bloquea la pantalla o se reinicia el dispositivo).
  */
 class ProgramadorTrabajo(context: Context) {
 
